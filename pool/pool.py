@@ -26,6 +26,7 @@ class Pool(object):
             'terminal': np.zeros([self.history_horizon+1, 1]),
             's_': np.zeros([self.history_horizon+1, s_dim]),
 
+
         }
 
 
@@ -33,6 +34,7 @@ class Pool(object):
         if 'finite_horizon' in variant.keys():
             if variant['finite_horizon']:
                 self.memory.update({'value': np.zeros([self.history_horizon+1, 1])}),
+                self.memory.update({'r_N_': np.zeros([self.history_horizon + 1, 1])}),
                 self.horizon = variant['value_horizon']
         self.memory_pointer = 0
         self.min_memory_size = variant['min_memory_size']
@@ -62,11 +64,15 @@ class Pool(object):
                 r = deepcopy(self.current_path['r'])
                 path_length = len(r)
                 last_r = self.current_path['r'][-1, 0]
-                r = np.concatenate((r, last_r*np.ones([self.horizon, 1])), axis=0)
+                r = np.concatenate((r, last_r*np.ones([self.horizon+1, 1])), axis=0)
                 value = []
+                r_N_ = []
                 [value.append(r[i:i+self.horizon, 0].sum()) for i in range(path_length)]
+                [r_N_.append(r[i + self.horizon+1, 0]) for i in range(path_length)]
                 value = np.array(value)
+                r_N_ = np.array(r_N_)
                 self.memory['value'] = np.concatenate((self.memory['value'], value[:, np.newaxis]), axis=0)
+                self.memory['r_N_'] = np.concatenate((self.memory['r_N_'], r_N_[:, np.newaxis]), axis=0)
             for key in self.current_path.keys():
                 self.memory[key] = np.concatenate((self.memory[key], self.current_path[key]), axis=0)
             self.paths.appendleft(self.current_path)
