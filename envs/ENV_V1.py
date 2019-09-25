@@ -60,7 +60,7 @@ class CartPoleEnv_adv(gym.Env):
         self.masscart = 1
         self.masspole = 0.1
         self.total_mass = (self.masspole + self.masscart)
-        self.length = 0.5  # actually half the pole's length
+        self.length = 0.5 + 0  # actually half the pole's length
         self.polemass_length = (self.masspole * self.length)
         self.force_mag = 20
         self.tau = 0.02  # seconds between state updates
@@ -188,8 +188,8 @@ class CartPoleEnv_adv(gym.Env):
                                             cons_theta=self.theta_threshold_radians,
                                             target=self.target_pos,
                                             violation_of_constraint=violation_of_constraint,
-                                            reference=[0, 0],
-                                            state_of_interest=[x, theta],
+                                            reference=0,
+                                            state_of_interest=theta,
                                             )
 
     def reset(self):

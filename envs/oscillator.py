@@ -78,7 +78,7 @@ class oscillator(gym.Env):
             done = True
         else:
             done = False
-        return np.array([m1, m2, m3, p1, p2, p3, r1, p1-r1]), cost, done, dict(reference=r1, state_of_interest=self.state)
+        return np.array([m1, m2, m3, p1, p2, p3, r1, p1-r1]), cost, done, dict(reference=r1, state_of_interest=p1)
 
     def reset(self):
         self.state = self.np_random.uniform(low=0, high=5, size=(6,))

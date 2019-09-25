@@ -100,13 +100,13 @@ def read_eval_data(alg_path, args):
 
 
 def plot_line(results, alg, exp, args):
-    # fig = plt.figure(figsize=(9, 6))
-    # ax = fig.add_subplot(111)
+    fig = plt.figure(figsize=(9, 6))
+    ax = fig.add_subplot(111)
 
 
     for i,trial in enumerate(results.keys()):
-        fig = plt.figure(figsize=(9, 6))
-        ax = fig.add_subplot(111)
+        # fig = plt.figure(figsize=(9, 6))
+        # ax = fig.add_subplot(111)
         if trial in COLORS_map.keys():
             color = COLORS_map[trial]
         else:
@@ -119,13 +119,13 @@ def plot_line(results, alg, exp, args):
         if args['labels_on']:
             handles, labels = ax.get_legend_handles_labels()
             ax.legend(handles, labels, fontsize=20, loc=2, fancybox=False, shadow=False)
-        plt.savefig('-'.join([exp, alg, trial, 'dynamic.pdf']))
-        plt.show()
-    # if args['labels_on']:
-    #     handles, labels = ax.get_legend_handles_labels()
-    #     ax.legend(handles, labels, fontsize=20, loc=2, fancybox=False, shadow=False)
-    # plt.savefig('-'.join([exp , alg,trial,'dynamic.pdf']))
-    # plt.show()
+        # plt.savefig('-'.join([exp, alg, trial, 'dynamic.pdf']))
+        # plt.show()
+    if args['labels_on']:
+        handles, labels = ax.get_legend_handles_labels()
+        ax.legend(handles, labels, fontsize=20, loc=2, fancybox=False, shadow=False)
+    plt.savefig('-'.join([exp , alg,'dynamic.pdf']))
+    plt.show()
 
     return
 
@@ -142,7 +142,8 @@ if __name__ == '__main__':
 
     alg_list = [
         'LAC',
-        'SAC',
+        # 'LAC-horizon=5-quadratic',
+        # 'SAC',
         ]
 
     args = {
@@ -150,13 +151,13 @@ if __name__ == '__main__':
         'eval_content': [
             'K=1'
         ],
-        'labels_on':False,
+        'labels_on':True,
         'plot_list': [
-            '1',
-            '2',
-            '3',
-            '4',
-            '5',
+            # '1',
+            # '2',
+            # '3',
+            # '4',
+            # '5',
             # 'original',
             # 'K_i=5',
             # 'K_i=10',
@@ -164,6 +165,16 @@ if __name__ == '__main__':
             # 'a_i=4.8',
             # 'delta=0.5',
             # 'delta=1',
+            # 'noise-level=1',
+            # 'noise-level=0.5',
+            # 'Ki=5',
+            # 'Ki=10',
+            # 'ai=32',
+            # 'ai=48',
+            'original',
+            'length=1.0',
+            'length=1.5',
+            'length=2.0',
         ],
         'formal_plot':True,
         # 'formal_plot': False,
@@ -177,6 +188,6 @@ if __name__ == '__main__':
         # 'return_std',
         # 'average_length'
     ]
-    env = ['oscillator'][0:1]
+    env = ['oscillator', 'cartpole_cost'][1:2]
     main(args, alg_list, content, env)
 

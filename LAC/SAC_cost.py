@@ -266,6 +266,10 @@ class SAC_cost(object):
             net_1 = tf.layers.dense(net_0, 256, activation=tf.nn.relu, name='l2', trainable=trainable)  # 原始是30
             return tf.layers.dense(net_1, 1, trainable=trainable)  # Q(s,a)
 
+    def evaluate_value(self, s, a):
+
+        return self.sess.run(tf.reduce_max((self.q1, self.q2), axis=0), {self.S: s[np.newaxis, :], self.a_input: a[np.newaxis, :]})[0]
+
     def save_result(self, path):
 
         save_path = self.saver.save(self.sess, path + "/policy/model.ckpt")

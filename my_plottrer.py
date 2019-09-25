@@ -424,15 +424,17 @@ def main(args, alg_list, measure_list, env):
 if __name__ == '__main__':
 
     alg_list = [
-        # 'LAC',
-        # 'SAC',
+        'LAC',
         'SAC',
-        'N=5',
-        'N=10',
-        'N=15',
-        'N=20',
-        'infinite horizon',
-        'LQR',
+        # 'LAC-horizon=inf-quadratic',
+        # 'LAC-horizon=5-quadratic',
+        # 'SAC',
+        # 'N=5',
+        # 'N=10',
+        # 'N=15',
+        # 'N=20',
+        # 'infinite horizon',
+        # 'LQR',
         # 'LAC-new',
         # 'SAC_cost-new',
         # 'LAC-horizon=10',
@@ -445,32 +447,32 @@ if __name__ == '__main__':
         ]
 
     args = {
-        'data': ['training', 'eval'][1],
+        'data': ['training', 'eval'][0],
         'eval_content': [
             # 'length_of_pole-mass_of_cart',
-            'impulse',
-            # 'constant_impulse',
+            # 'impulse',
+            'constant_impulse',
             # 'various_disturbance-sin',
             # 'mass_of_pole',
             # 'length_of_pole',
             # 'mass_of_cart',
         ],
 
-        'plot_list': [str(i) for i in range(0, 10)],
+        'plot_list': [str(i) for i in range(0, 12)],
         'formal_plot':True,
         # 'formal_plot': False,
-        # 'ylim':[-10000,3.5e5],
+        # 'ylim':[0,6],
         }
     # args = {'lim': [str(i) for i in range(0, 10)]}
     # args = {'plot_list': [str(i) for i in range(1)]}
 
     content = [
-        # 'return',
+        'return',
         # 'eprewmean',
-        'death_rate',
+        # 'death_rate',
         # 'return_std',
         # 'average_length'
     ]
-    env = ['cartpole_cost', 'HalfCheetahcost-v0', 'FetchReach-v1', 'Antcost-v0','Quadrotor-v1_cost','oscillator'][0:1]
+    env = ['cartpole_cost', 'HalfCheetahcost-v0', 'FetchReach-v1', 'Antcost-v0','Quadrotor-v1_cost','oscillator'][1:2]
     main(args, alg_list, content, env)
 
