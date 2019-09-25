@@ -54,12 +54,14 @@ class LAC(object):
         else:
             self.target_entropy = target_entropy
         self.finite_horizon = variant['finite_horizon']
+        self.soft_predict_horizon = variant['soft_predict_horizon']
         with tf.variable_scope('Actor'):
             self.S = tf.placeholder(tf.float32, [None, s_dim], 's')
             self.S_ = tf.placeholder(tf.float32, [None, s_dim], 's_')
             self.a_input = tf.placeholder(tf.float32, [None, a_dim], 'a_input')
             self.a_input_ = tf.placeholder(tf.float32, [None, a_dim], 'a_input_')
             self.R = tf.placeholder(tf.float32, [None, 1], 'r')
+            self.R_N_ = tf.placeholder(tf.float32, [None, 1], 'r_N_')
             self.V = tf.placeholder(tf.float32, [None, 1], 'v')
             self.terminal = tf.placeholder(tf.float32, [None, 1], 'terminal')
             self.LR_A = tf.placeholder(tf.float32, None, 'LR_A')
@@ -122,7 +124,7 @@ class LAC(object):
                 policy_prior_log_probs = 0.0
 
             if self.use_lyapunov is True:
-                a_loss = self.labda * self.l_derta + self.alpha * tf.reduce_mean(log_pis)  - policy_prior_log_probs
+                a_loss = self.labda * self.l_derta + self.alpha * tf.reduce_mean(log_pis) - policy_prior_log_probs
             else:
                 a_loss = a_preloss
 
@@ -133,7 +135,10 @@ class LAC(object):
             with tf.control_dependencies(target_update):  # soft replacement happened at here
                 if self.approx_value:
                     if self.finite_horizon:
-                        l_target = self.V
+                        if self.soft_predict_horizon:
+                            l_target = self.R - self.R_N_ + tf.stop_gradient(l_)
+                        else:
+                            l_target = self.V
                     else:
                         l_target = self.R + gamma * (1-self.terminal)*tf.stop_gradient(l_)  # Lyapunov critic - self.alpha * next_log_pis
                 else:
@@ -183,7 +188,8 @@ class LAC(object):
                      self.LR_C: LR_C, self.LR_A: LR_A, self.LR_L: LR_L}
         if self.finite_horizon:
             bv = batch['value']
-            feed_dict.update({self.V:bv})
+            b_r_ = batch['r_N_']
+            feed_dict.update({self.V:bv, self.R_N_:b_r_})
 
         self.sess.run(self.opt, feed_dict)
         labda, alpha, l_error, entropy, a_loss = self.sess.run(self.diagnotics, feed_dict)
@@ -236,6 +242,18 @@ class LAC(object):
         return clipped_a, clipped_mu, distribution
 
 
+    def evaluate_value(self, s, a):
+
+        if len(self.working_memory) < self.history_horizon:
+            [self.working_memory.appendleft(s) for _ in range(self.history_horizon)]
+
+        self.working_memory.appendleft(s)
+        try:
+            s = np.concatenate(self.working_memory)
+        except ValueError:
+            print(s)
+
+        return self.sess.run(self.l, {self.S: s[np.newaxis, :], self.a_input: a[np.newaxis, :]})[0]
 
     def _build_l(self, s, a, reuse=None, custom_getter=None):
         trainable = True if reuse is None else False
@@ -246,8 +264,10 @@ class LAC(object):
             b1 = tf.get_variable('b1', [1, n_l1], trainable=trainable)
             net_0 = tf.nn.relu(tf.matmul(s, w1_s) + tf.matmul(a, w1_a) + b1)
             net_1 = tf.layers.dense(net_0, 256, activation=tf.nn.relu, name='l2', trainable=trainable)  # 原始是30
-            # net_2 = tf.layers.dense(net_1, 32, activation=tf.nn.relu, name='l3', trainable=trainable)  # 原始是30
-            return tf.layers.dense(net_1, 1, trainable=trainable)  # Q(s,a)
+            # return tf.layers.dense(net_1, 1, trainable=trainable)  # Q(s,a)
+            net_2 = tf.layers.dense(net_1, 16, activation=tf.nn.relu, name='l3', trainable=trainable)  # 原始是30
+            return tf.expand_dims(tf.reduce_sum(tf.square(net_2), axis=1),axis=1)  # Q(s,a)
+            # return tf.square(tf.layers.dense(net_1, 1, trainable=trainable)) # Q(s,a)
 
     def save_result(self, path):
 

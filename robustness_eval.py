@@ -53,6 +53,7 @@ def cartpole_disturber(time, s, action, env, eval_params, form_of_eval, disturbe
         s_, r, done, info = env.step(action, process_noise=d)
     else:
         s_, r, done, info = env.step(action)
+        done = False
     return s_, r, done, info
 
 
@@ -311,19 +312,23 @@ def dynamic(variant):
         if eval_params['plot_average']:
             t = range(max_len)
             ax.plot(t, average_path, color='red')
-            ax.fill_between(t, average_path-std_path, average_path+std_path,
-                            color='red', alpha=.1)
+            # if env_name =='cartpole_cost':
+            #     ax.fill_between(t, (average_path - std_path)[:, 0], (average_path + std_path)[:, 0],
+            #                     color='red', alpha=.1)
+            # else:
+            ax.fill_between(t, average_path-std_path, average_path+std_path, color='red', alpha=.1)
         else:
             for path in paths['s']:
                 path_length = len(path)
                 t = range(path_length)
                 path = np.array(path)
-                ax.plot(t, path[:,0],label='mRNA 1')
-                ax.plot(t, path[:, 1], label='mRNA 2')
-                ax.plot(t, path[:, 2], label='mRNA 3')
-                ax.plot(t, path[:, 3], label='Protein 1')
-                ax.plot(t, path[:, 4], label='Protein 2')
-                ax.plot(t, path[:, 5], label='Protein 3')
+                ax.plot(t, path)
+                # ax.plot(t, path[:,0],label='mRNA 1')
+                # ax.plot(t, path[:, 1], label='mRNA 2')
+                # ax.plot(t, path[:, 2], label='mRNA 3')
+                # ax.plot(t, path[:, 3], label='Protein 1')
+                # ax.plot(t, path[:, 4], label='Protein 2')
+                # ax.plot(t, path[:, 5], label='Protein 3')
 
                 if path_length>max_len:
                     max_len = path_length
@@ -351,6 +356,14 @@ def dynamic(variant):
                 t = range(len(path))
                 ax.plot(t, path)
             plt.savefig(env_name + '-' + variant['algorithm_name']+'-dynamic-cost.pdf')
+            plt.show()
+        if 'v' in paths.keys():
+            fig = plt.figure(figsize=(9, 6))
+            ax = fig.add_subplot(111)
+            for path in paths['v']:
+                t = range(len(path))
+                ax.plot(t, path)
+            plt.savefig(env_name + '-' + variant['algorithm_name']+'-dynamic-value.pdf')
             plt.show()
         return
 
@@ -483,6 +496,7 @@ def evaluation(variant, env, policy, disturber= None):
     trial_list = os.listdir(variant['log_path'])
     episode_length = []
     cost_paths = []
+    value_paths = []
     state_paths = []
     ref_paths = []
     for trial in trial_list:
@@ -498,6 +512,7 @@ def evaluation(variant, env, policy, disturber= None):
         for i in range(int(np.ceil(eval_params['num_of_paths']/(len(trial_list)-1)))):
             path = []
             state_path = []
+            value_path = []
             ref_path = []
             cost = 0
             s = env.reset()
@@ -520,6 +535,8 @@ def evaluation(variant, env, policy, disturber= None):
                     s_, r, done, info = disturbance_step(j, s, action, env, eval_params, form_of_eval, disturber=disturber)
                 else:
                     s_, r, done, info = disturbance_step(j, s, action, env, eval_params, form_of_eval)
+
+                # value_path.append(policy.evaluate_value(s,a))
                 path.append(r)
                 cost += r
                 if 'Fetch' in env_name or 'Hand' in env_name:
@@ -540,6 +557,7 @@ def evaluation(variant, env, policy, disturber= None):
                         die_count += 1
                     break
             cost_paths.append(path)
+            value_paths.append(value_path)
             state_paths.append(state_path)
             ref_paths.append(ref_path)
         death_rates.append(die_count/(i+1)*100)
@@ -557,9 +575,9 @@ def evaluation(variant, env, policy, disturber= None):
                   'death_rate_std': death_rate_std,
                   'average_length': average_length}
 
-    path_dict = {'c': cost_paths}
+    path_dict = {'c': cost_paths, 'v':value_paths}
     if 'reference' in info.keys():
-        path_dict.update({'reference':ref_paths})
+        path_dict.update({'reference': ref_paths})
     if 'state_of_interest' in info.keys():
         path_dict.update({'s':state_paths})
 

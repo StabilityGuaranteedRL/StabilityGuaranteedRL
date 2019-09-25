@@ -8,15 +8,16 @@ VARIANT = {
     # 'env_name': 'FetchReach-v1',
     # 'env_name': 'Antcost-v0',
     'env_name': 'oscillator',
+    # 'env_name': 'oscillator_complicated',
     # 'env_name': 'HalfCheetahcost-v0',
     # 'env_name': 'cartpole_cost',
     #training prams
     'algorithm_name': 'LAC',
     # 'algorithm_name': 'SAC_cost',
-    # 'additional_description': '-horizon=inf-weight-4-10-0-0-0',
+    'additional_description': '',
     # 'additional_description': '-new',
     # 'additional_description': '-horizon=inf-scale-cost=0.01-gamma=0.75-maxa=1.-1e6',
-    'additional_description': '',
+    # 'additional_description': '',
     # 'evaluate': False,
     'train': True,
     # 'train': False,
@@ -26,18 +27,19 @@ VARIANT = {
     'start_of_trial': 0,
 
     #evaluation params
-    # 'evaluation_form': 'constant_impulse',
-    'evaluation_form': 'dynamic',
+    'evaluation_form': 'constant_impulse',
+    # 'evaluation_form': 'dynamic',
     # 'evaluation_form': 'impulse',
     # 'evaluation_form': 'various_disturbance',
     # 'evaluation_form': 'param_variation',
     # 'evaluation_form': 'trained_disturber',
     'eval_list': [
         # cartpole
-        # 'LAC',
-        # 'SAC',
+        'LAC',
+        'SAC',
+        # 'LAC-horizon=5-quadratic',
         # 'LQR',
-        'SAC_cost-new',
+        # 'SAC_cost-new',
         # halfcheetah
         # 'LAC-des=1-horizon=inf-alpha=1',
         # 'LAC-des=1-horizon=inf',
@@ -73,6 +75,12 @@ ENV_PARAMS = {
     'oscillator': {
         'max_ep_steps': 400,
         'max_global_steps': int(1e5),
+        'max_episodes': int(1e5),
+        'disturbance dim': 2,
+        'eval_render': False,},
+    'oscillator_complicated': {
+        'max_ep_steps': 400,
+        'max_global_steps': int(3e5),
         'max_episodes': int(1e5),
         'disturbance dim': 2,
         'eval_render': False,},
@@ -130,9 +138,10 @@ ALG_PARAMS = {
         'use_lyapunov': True,
         'adaptive_alpha': True,
         'approx_value': True,
-        'value_horizon': 10,
-        # 'finite_horizon': True,
-        'finite_horizon': False,
+        'value_horizon': 5,
+        'finite_horizon': True,
+        'soft_predict_horizon': False,
+        # 'finite_horizon': False,
         'target_entropy': None,
         'history_horizon': 0,  # 0 is using current state only
     },
@@ -158,7 +167,7 @@ ALG_PARAMS = {
         'train_per_cycle': 50,
         'use_lyapunov': False,
         'adaptive_alpha': True,
-        'target_entropy': -5,
+        'target_entropy': None,
 
     },
 }
@@ -211,9 +220,9 @@ EVAL_PARAMS = {
         'num_of_paths': 100,   # number of path for evaluation
     },
     'dynamic': {
-        'additional_description': 'no-control',
-        'num_of_paths': 1,   # number of path for evaluation
-        'plot_average': False,
+        'additional_description': 'original',
+        'num_of_paths': 10,   # number of path for evaluation
+        'plot_average': True,
         'directly_show': True,
     },
 }
@@ -257,6 +266,10 @@ def get_env_from_name(name):
         env = env.unwrapped
     elif name == 'oscillator':
         from envs.oscillator import oscillator as env
+        env = env()
+        env = env.unwrapped
+    elif name == 'oscillator_complicated':
+        from envs.oscillator_complicated import oscillator as env
         env = env()
         env = env.unwrapped
     elif name == 'Quadrotorcost-v0':
